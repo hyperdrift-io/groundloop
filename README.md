@@ -2,6 +2,11 @@
 
 Groundloop helps coding-agent sessions start from current project reality and turns repeated development friction into verified improvements. It uses a rebuildable JSON ledger; no service or database is required.
 
+## Product documents
+
+- [Mission and product architecture](docs/groundloop-viability-assessment.html)
+- [Mission delivery plan](docs/groundloop-plan.html)
+
 ## Local alpha
 
 ```powershell

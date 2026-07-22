@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Groundloop Mission Delivery Plan</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg:#f6f8fb;--surface:#fff;--text:#17202a;--muted:#5f6b76;--line:#d8dee8;
+      --accent:#2457d6;--accent-soft:#eaf0ff;--good:#16784a;--good-soft:#e8f6ef;
+      --warn:#8a5b00;--warn-soft:#fff4d6;--risk:#a83030;--risk-soft:#fdecec;--code:#eef1f5;
+      --shadow:0 8px 24px rgba(18,31,53,.08)
+    }
+    @media(prefers-color-scheme:dark){
+      :root{--bg:#101318;--surface:#171b21;--text:#edf1f5;--muted:#aab4bf;--line:#343b45;
+      --accent:#89a9ff;--accent-soft:#202d4f;--good:#6bd2a0;--good-soft:#17382a;
+      --warn:#f0c567;--warn-soft:#3c3017;--risk:#ff9797;--risk-soft:#412020;--code:#222831;--shadow:none}
+    }
+    *{box-sizing:border-box}html{scroll-behavior:smooth}
+    body{margin:0;background:var(--bg);color:var(--text);font:16px/1.58 system-ui,-apple-system,"Segoe UI",sans-serif}
+    main{max-width:1120px;margin:0 auto;padding:44px 24px 80px}
+    h1,h2,h3,h4{line-height:1.2;letter-spacing:-.02em}h1{margin:0 0 12px;font-size:clamp(2.2rem,5vw,3.7rem)}
+    h2{margin:54px 0 16px;font-size:1.75rem}h3{margin:27px 0 9px;font-size:1.18rem}h4{margin:20px 0 7px}
+    p{max-width:84ch}a{color:var(--accent)}
+    code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace}
+    code{background:var(--code);padding:.1em .35em;border-radius:4px}
+    pre{overflow-x:auto;background:var(--code);border:1px solid var(--line);border-radius:11px;padding:17px;line-height:1.47}
+    pre code{padding:0;background:transparent}
+    table{width:100%;border-collapse:collapse;margin:18px 0 28px;background:var(--surface)}
+    th,td{padding:12px 14px;border:1px solid var(--line);text-align:left;vertical-align:top}th{background:var(--accent-soft)}
+    ul,ol{padding-left:1.4rem}li+li{margin-top:.38rem}
+    .hero{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:clamp(26px,5vw,50px);box-shadow:var(--shadow)}
+    .eyebrow{color:var(--accent);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.78rem}
+    .subtitle{color:var(--muted);font-size:1.18rem;max-width:72ch}.meta,.small{color:var(--muted);font-size:.9rem}
+    .mission{margin:27px 0 8px;padding:20px 22px;border-left:5px solid var(--good);background:var(--good-soft);border-radius:9px;font-size:1.22rem}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:22px 0}
+    .grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .card{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:19px}.card h3{margin-top:0;color:var(--accent)}
+    .callout{margin:22px 0;padding:17px 20px;border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:9px;background:var(--surface)}
+    .good{border-left-color:var(--good);background:var(--good-soft)}.warning{border-left-color:var(--warn);background:var(--warn-soft)}
+    .flow{text-align:center}.toc{columns:2}.toc a{text-decoration:none}
+    .phase{margin:28px 0;padding:20px;background:var(--surface);border:1px solid var(--line);border-radius:13px}
+    .phase h3{margin-top:0}.tag{display:inline-block;margin-left:7px;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:.78rem;font-weight:700}
+    .status{font-weight:700}.pass{color:var(--good)}.defer{color:var(--warn)}
+    footer{margin-top:62px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted)}
+    @media(max-width:780px){main{padding:20px 14px 50px}.grid,.grid.two{grid-template-columns:1fr}.toc{columns:1}table{display:block;overflow-x:auto}}
+    @media print{:root{color-scheme:light}body{background:#fff}main{max-width:none;padding:0}.hero,.card{box-shadow:none}a{color:#000}}
+  </style>
+</head>
+<body>
+<main>
+  <header class="hero">
+    <div class="eyebrow">Mission delivery plan</div>
+    <h1>Groundloop</h1>
+    <p class="subtitle">A staged plan for making daily AI-assisted development current, relevant, cumulative and measurably better without adding unnecessary ceremony.</p>
+    <div class="mission"><strong>Mission:</strong> Make AI-assisted development improve every day: keep project understanding current, apply it to the work at hand, and turn daily experience into simpler, proven ways of working.</div>
+    <p class="meta">Plan date: 22 July 2026 - first dogfood environment: a local multi-repository workspace - portable package before public distribution</p>
+  </header>
+
+  <div class="callout good"><strong>Implementation checkpoint — 22 July 2026:</strong> the portable alpha now implements Phases 0–4: database-free status and checkpoints, post-session operational lesson fingerprints, Codex/Claude launchers with a startup-only hook, dual plugin manifests, daily reflection, improvement scouting, installation lifecycle, diagnostics, privacy-filtered digests and baseline/treatment comparison. Learning runs only after the launched agent process closes; no per-tool or prompt-time hook runs during work. Phase 5 scheduling remains gated on five useful manual reflections; Phase 6 dogfood has begun.</div>
+
+  <nav aria-label="Contents">
+    <h2>Contents</h2>
+    <ol class="toc">
+      <li><a href="#outcomes">Mission outcomes</a></li>
+      <li><a href="#principles">Planning principles</a></li>
+      <li><a href="#experience">Daily experience</a></li>
+      <li><a href="#design">Product design</a></li>
+      <li><a href="#startup">Startup summary</a></li>
+      <li><a href="#skills">Skill design</a></li>
+      <li><a href="#sources">Source strategy</a></li>
+      <li><a href="#roadmap">Delivery roadmap</a></li>
+      <li><a href="#evaluation">Evaluation</a></li>
+      <li><a href="#traceability">Mission traceability</a></li>
+      <li><a href="#structure">Portable product structure</a></li>
+      <li><a href="#gates">Release gates</a></li>
+      <li><a href="#references">References</a></li>
+    </ol>
+  </nav>
+
+  <section id="outcomes">
+    <h2>1. Mission outcomes</h2>
+    <div class="grid">
+      <article class="card">
+        <h3>Start current</h3>
+        <p>Every session can state what is known, what changed, how fresh that understanding is and where attention is needed.</p>
+      </article>
+      <article class="card">
+        <h3>Work relevantly</h3>
+        <p>Only the conventions, examples, lessons and delivery expectations that matter to the current work are brought forward.</p>
+      </article>
+      <article class="card">
+        <h3>Improve daily</h3>
+        <p>Daily experience produces a justified enhancement, a focused exploration, a verification result or an explicit no-change outcome.</p>
+      </article>
+    </div>
+    <div class="callout good"><strong>North-star outcome:</strong> over time, the workspace becomes easier to understand, safer to change and simpler to operate, while the developer spends less effort reconstructing context and repeating solved work.</div>
+  </section>
+
+  <section id="principles">
+    <h2>2. Planning principles</h2>
+    <table>
+      <tr><th>Principle</th><th>Plan consequence</th></tr>
+      <tr><td><strong>Mission traced</strong></td><td>Every work item must improve freshness, task relevance, daily learning or proof of value.</td></tr>
+      <tr><td><strong>Fast before deep</strong></td><td>Session startup performs a deterministic status check. Reflection and research run separately.</td></tr>
+      <tr><td><strong>One source, many consumers</strong></td><td>Shared skills and scripts serve Claude and Codex; host configuration stays thin.</td></tr>
+      <tr><td><strong>Evidence before enhancement</strong></td><td>Daily reflection begins from code changes, thread outcomes, failures, validations and delivery evidence.</td></tr>
+      <tr><td><strong>Explore for a reason</strong></td><td>Technology and topic research starts from a concrete opportunity and ends with a small experiment.</td></tr>
+      <tr><td><strong>Prove the loop</strong></td><td>Every adopted improvement has an expected outcome and a later verification decision.</td></tr>
+      <tr><td><strong>Lean by default</strong></td><td>Empty reviews are valid, outputs are bounded, and existing sources are improved before new ones are created.</td></tr>
+      <tr><td><strong>Portable core, local truth</strong></td><td>Groundloop is an installable product; each workspace supplies only a small declarative configuration and remains the source of project truth.</td></tr>
+      <tr><td><strong>Personal proof first</strong></td><td>The first trial optimises this workspace through the same public interfaces another developer would use. Marketplace promotion, MCP and community distribution follow measured value.</td></tr>
+    </table>
+  </section>
+
+  <section id="experience">
+    <h2>3. Daily Groundloop experience</h2>
+    <table>
+      <tr><th>Moment</th><th>Experience</th><th>Maximum useful output</th></tr>
+      <tr><td>Session start or resume</td><td>A hook displays Groundloop freshness, repository drift, last reflection and due improvement work.</td><td>Eight lines, no analysis, no network-dependent blocking.</td></tr>
+      <tr><td>Task start</td><td>The agent uses current workspace instructions, relevant domain skills and prior verified guidance.</td><td>The smallest set of useful sources and checks.</td></tr>
+      <tr><td>During work</td><td>Existing skills guide code, operations, evidence and delivery workflows.</td><td>Guidance only when task-relevant.</td></tr>
+      <tr><td>Daily reflection</td><td><code>reflect-on-development</code> reviews the day, previous improvement outcomes and the latest project delta.</td><td>One priority improvement, one verification decision and at most three actions.</td></tr>
+      <tr><td>Improvement scouting</td><td><code>scout-development-improvements</code> explores a skill, technology, practice or learning topic with step-change potential.</td><td>One recommended leap, up to two alternatives and one bounded experiment.</td></tr>
+      <tr><td>Following days</td><td>The reflection checks whether adopted improvements reduced the targeted friction.</td><td>Keep, adjust, consolidate or retire.</td></tr>
+    </table>
+
+    <h3>Recommended cadence</h3>
+    <ul>
+      <li><strong>Every session:</strong> quick startup status.</li>
+      <li><strong>Every task:</strong> relevant guidance through normal agent and skill selection.</li>
+      <li><strong>Once each working day:</strong> evidence-led reflection in proposal mode.</li>
+      <li><strong>Weekly or on demand:</strong> improvement scouting.</li>
+      <li><strong>Continuously:</strong> verify prior improvements when enough evidence exists.</li>
+    </ul>
+
+    <h3>Opt-in comparison</h3>
+    <p>Groundloop is launched as an explicit treatment rather than silently changing every agent session. The developer can alternate between the same underlying work configuration with and without grounding:</p>
+    <pre><code># Baseline
+codex -p work
+claude
+
+# Groundloop treatment, preserving all trailing CLI arguments
+codex-ground-loop
+claude-ground-loop</code></pre>
+    <p>The launchers record only the host, workspace identity, Groundloop variant and timing fields needed for the trial. They do not fork the developer's model, permission or tool configuration. Comparisons are directional workflow evidence, not claims of a controlled scientific experiment.</p>
+  </section>
+
+  <section id="design">
+    <h2>4. Product design</h2>
+    <pre class="flow"><code>CURRENT PROJECT
+code + docs + skills + scripts + tests + recent outcomes
+                         |
+                         v
+                    QUICK STATUS
+         Is Groundloop current and what changed?
+                         |
+                         v
+                   DAILY REFLECTION
+      What did we learn and what should improve?
+                   /             \
+                  v               v
+         PRACTICAL CHANGE     OPEN OPPORTUNITY
+                  |               |
+                  v               v
+              VERIFY         IMPROVEMENT SCOUT
+                  |               |
+                  +-------+-------+
+                          v
+                 SIMPLER PROVEN PRACTICE
+                          |
+                          +------> next day</code></pre>
+
+    <h3>Four small capabilities</h3>
+    <ol>
+      <li><strong>Status:</strong> maintain an honest, cheap view of freshness and due work.</li>
+      <li><strong>Reflect:</strong> capitalise on daily lessons and patterns.</li>
+      <li><strong>Scout:</strong> seek an occasional step-change when evidence exposes an opportunity.</li>
+      <li><strong>Verify:</strong> determine whether adopted improvements delivered value.</li>
+    </ol>
+    <p>The capability core is host-neutral. Codex and Claude adapters translate lifecycle input and output, while workspace adapters describe repositories and conventions. MCP is not required to prove this design. A later MCP can expose the same proven capabilities to remote hosts without moving the product's rules or state into the MCP layer.</p>
+  </section>
+
+  <section id="startup">
+    <h2>5. Session-start summary</h2>
+    <p>Skills themselves use progressive disclosure: their metadata is discovered at startup and full instructions load only when invoked. The hook therefore does not load or run a full skill. It runs a fast Groundloop status command, displays the result and gives the agent the same factual context.</p>
+
+    <h3>Summary contract</h3>
+    <pre><code>GROUNDLOOP - CURRENT
+Workspace: 4/4 repos known | remote refs checked 07:42
+Drift: 2 repos changed since last grounding | working tree dirty
+Daily reflection: current - 21 Jul 18:10
+Improvement: 1 proposal awaiting verification
+Scout: next due 25 Jul | last leap reviewed 18 Jul
+Skills: reflection available | scout available</code></pre>
+
+    <h3>Status vocabulary</h3>
+    <table>
+      <tr><th>Status</th><th>Meaning</th><th>User implication</th></tr>
+      <tr><td><strong>CURRENT</strong></td><td>Configured repositories, local state, skill availability and daily reflection are within their freshness thresholds.</td><td>Continue normally.</td></tr>
+      <tr><td><strong>CHANGES</strong></td><td>Sources are fresh, but meaningful repository or workspace changes occurred after the previous grounding.</td><td>The agent should incorporate the delta for the task.</td></tr>
+      <tr><td><strong>STALE</strong></td><td>Remote refresh, reflection or skill validation is overdue.</td><td>Refresh before making broad project claims.</td></tr>
+      <tr><td><strong>PARTIAL</strong></td><td>One or more configured repositories or sources could not be checked.</td><td>Proceed with the named limitation.</td></tr>
+    </table>
+
+    <h3>Freshness definition</h3>
+    <ul>
+      <li>Local repository HEAD and working-tree state are checked when the hook runs.</li>
+      <li>Remote freshness reports the time of the last successful bounded fetch; it is never inferred from a local ref alone.</li>
+      <li>Daily reflection is current when a successful review covers the previous 36 hours.</li>
+      <li>Skill availability confirms the shared source and client-discoverable links are present and last validation passed.</li>
+      <li>Previous improvements show a due date rather than being silently forgotten.</li>
+    </ul>
+
+    <h3>Hook requirements</h3>
+    <ul>
+      <li>Run for startup, resume, clear and compact lifecycle events where supported.</li>
+      <li>Complete the local check within two seconds under normal conditions.</li>
+      <li>Stay below eight lines and roughly 900 characters.</li>
+      <li>Perform no reflection, web research or unbounded repository traversal.</li>
+      <li>Fail open with a concise <code>PARTIAL</code> summary.</li>
+      <li>Return no secrets, environment dumps, source contents or transcript text.</li>
+      <li>Use one cross-platform Groundloop status command with thin Claude and Codex output adapters.</li>
+    </ul>
+
+    <h3>Launcher contract</h3>
+    <ul>
+      <li><code>codex-ground-loop</code> sets the Groundloop treatment marker and delegates to <code>codex --profile work --dangerously-bypass-approvals-and-sandbox --dangerously-bypass-hook-trust</code> by default. The configured profile name is overridable at install time without duplicating flags.</li>
+      <li><code>claude-ground-loop</code> sets the same marker and delegates to <code>claude --dangerously-skip-permissions</code> while preserving the developer's normal arguments.</li>
+      <li>Both are executable shims on <code>PATH</code>, not shell-specific aliases, so argument forwarding, updates and Windows/macOS/Linux behaviour can be tested consistently.</li>
+      <li>The Groundloop aliases intentionally provide unattended execution and must be used only in a trusted workspace where unrestricted access is intended. Plain <code>codex -p work</code> and <code>claude</code> retain their normal permission behaviour.</li>
+      <li>Claude uses its session-only plugin loading where practical. Codex uses an installed hook that exits immediately with no output when the marker is absent. This keeps <code>codex -p work</code> and plain <code>claude</code> as meaningful operational baselines while acknowledging that the trial is not laboratory isolation.</li>
+      <li>The treatment marker lets the reflection distinguish Groundloop sessions without modifying or parsing prompts.</li>
+    </ul>
+
+    <div class="callout"><strong>Cross-agent implementation note:</strong> current Claude Code and Codex both support <code>SessionStart</code> events for startup, resume, clear and compact. Claude accepts startup context through stdout or <code>additionalContext</code>. Codex supports model-visible SessionStart hook output and ordinarily requires project hook trust; the explicitly unrestricted Groundloop alias bypasses that trust prompt. Hook output and model-context behaviour are covered by the dual-host smoke tests.</div>
+  </section>
+
+  <section id="skills">
+    <h2>6. Skill design</h2>
+    <div class="grid two">
+      <article class="card">
+        <h3>reflect-on-development</h3>
+        <p><strong>Purpose:</strong> evidence-led daily improvement from internal development activity.</p>
+        <p><strong>Cadence:</strong> daily, after difficult work, or on request.</p>
+        <p><strong>Sources:</strong> privacy-filtered threads, Git delta, failures, tests, evidence, existing guidance and prior proposals.</p>
+        <p><strong>Primary outcome:</strong> incremental improvement and verification.</p>
+      </article>
+      <article class="card">
+        <h3>scout-development-improvements</h3>
+        <p><strong>Purpose:</strong> recommend a high-leverage skill, technology, practice or learning topic that could create a meaningful step-change.</p>
+        <p><strong>Cadence:</strong> weekly, on demand, or when reflection identifies an unresolved opportunity.</p>
+        <p><strong>Sources:</strong> current project needs, local skill inventory, primary technical sources, official documentation and relevant current research.</p>
+        <p><strong>Primary outcome:</strong> one evidence-fitted leap experiment.</p>
+      </article>
+    </div>
+
+    <h3>Why two skills</h3>
+    <table>
+      <tr><th>Dimension</th><th>Daily reflection</th><th>Improvement scout</th></tr>
+      <tr><td>Question</td><td>What did our work teach us?</td><td>What could materially improve how we work?</td></tr>
+      <tr><td>Direction</td><td>Inside-out: project evidence to improvement.</td><td>Outside-in: opportunity to relevant external option.</td></tr>
+      <tr><td>Bias</td><td>Incremental, maintain and simplify.</td><td>Exploratory, step-change and learning.</td></tr>
+      <tr><td>Frequency</td><td>Daily.</td><td>Weekly or triggered.</td></tr>
+      <tr><td>Output</td><td>Decision register and verification.</td><td>Leap proposal and experiment.</td></tr>
+    </table>
+    <p>Their short descriptions are visible at startup; their full instructions load only when selected. This separation improves triggering without adding normal context weight.</p>
+
+    <h3>Update: reflect-on-development</h3>
+    <ol>
+      <li>Replace the rolling-window-only model with a last-successful-review checkpoint plus a 36-hour fallback.</li>
+      <li>Include repository changes since the last reviewed commit for every configured workspace repo.</li>
+      <li>Review open improvement proposals and decide whether evidence supports keep, adjust, consolidate or retire.</li>
+      <li>Add an exploration gate: send unresolved high-value opportunities to the scout rather than doing broad research inside the daily review.</li>
+      <li>After a Groundloop-launched agent process closes, correlate sanitised command failures, warnings and subsequent corrections into operational lesson fingerprints; track recurrence, resolution, relevance and retirement without retaining complete commands.</li>
+      <li>Keep lesson analysis out of active sessions. Reflection decides whether evidence warrants a helper, preflight, regression test, linter or concise guidance.</li>
+      <li>Prioritise one daily improvement. Keep the existing limit of at most five material lessons and three actions.</li>
+      <li>Advance the checkpoint only after a complete report is produced.</li>
+    </ol>
+
+    <h4>Operational lesson lifecycle</h4>
+    <pre><code>failure or warning → sanitised fingerprint → correction → recurrence check
+                   → watch | automate | promote | retire</code></pre>
+    <p>A one-off typo normally expires. Two independent occurrences, or one severe preventable incident, can become shared guidance or automation. Startup shows only an active count; detailed analysis remains in the post-session reflection workflow and never interrupts the task in progress.</p>
+
+    <h3>New: scout-development-improvements</h3>
+    <p><strong>Proposed description:</strong></p>
+    <pre><code>Research and recommend one high-leverage skill, technology, engineering
+practice, or learning topic grounded in current development evidence.
+Use when daily reflection exposes an unresolved improvement opportunity,
+during a weekly improvement scan, or when the user asks how to make the
+development workflow materially better.</code></pre>
+
+    <h4>Scout workflow</h4>
+    <ol>
+      <li>Select one opportunity from current evidence or an explicit user question.</li>
+      <li>State the desired improvement and current constraint.</li>
+      <li>Check existing workspace skills, scripts and installed capabilities before suggesting something new.</li>
+      <li>Research current options using primary and official sources wherever available.</li>
+      <li>Compare adopt, integrate, extend, build and learn paths.</li>
+      <li>Recommend one option and at most two alternatives.</li>
+      <li>Define a small reversible experiment, expected value, cost, success signal and stop condition.</li>
+      <li>Produce a self-contained HTML proposal; do not install or change the workspace without explicit authorisation.</li>
+    </ol>
+
+    <h4>Scout output contract</h4>
+    <ul>
+      <li>Opportunity and evidence.</li>
+      <li>Why it could produce a step-change.</li>
+      <li>Recommended skill, technology, practice or topic.</li>
+      <li>Fit with the current workspace.</li>
+      <li>What existing capability it reuses or replaces.</li>
+      <li>Experiment and measurement.</li>
+      <li>Risks, cost and exit path.</li>
+      <li>Review date.</li>
+    </ul>
+  </section>
+
+  <section id="sources">
+    <h2>7. Source strategy</h2>
+    <table>
+      <tr><th>Source group</th><th>Initial sources</th><th>Mission contribution</th></tr>
+      <tr><td>Project reality</td><td>Code, tests, configuration, Git history and working-tree state.</td><td>Current grounding.</td></tr>
+      <tr><td>Ways of working</td><td>AGENTS.md, CLAUDE.md, skills, scripts, templates and CI/evidence rules.</td><td>Relevant guidance and delivery consistency.</td></tr>
+      <tr><td>Daily experience</td><td>Privacy-filtered thread digest, concise failures, validation results and review outcomes.</td><td>Lessons and recurring patterns.</td></tr>
+      <tr><td>External intent</td><td>Tickets, PRs, designs and runbooks explicitly provided by the user or an authorised host connector.</td><td>Task relevance where code is insufficient.</td></tr>
+      <tr><td>Improvement horizon</td><td>Local skill catalogues, official product documentation, primary technical sources and current research.</td><td>Step-change exploration.</td></tr>
+    </table>
+    <p>Groundloop starts with sources already present in the workflow. A new document or service integration enters the plan only after repeated evidence shows that its absence materially weakens grounding, guidance or improvement.</p>
+  </section>
+
+  <section id="roadmap">
+    <h2>8. Delivery roadmap</h2>
+
+    <article class="phase">
+      <h3>Phase 0 - Mission, baseline and contracts <span class="tag">2-3 days</span></h3>
+      <p><strong>Mission support:</strong> define what “current,” “daily,” “simpler” and “proven” mean before implementation.</p>
+      <h4>Work</h4>
+      <ul>
+        <li>Approve the mission and three outcomes as the decision filter.</li>
+        <li>Inventory workspace repositories and their configured baseline refs.</li>
+        <li>Capture one week of baseline session warm-up, repeated friction, delivery omissions and current reflection effort.</li>
+        <li>Define baseline and treatment launch contracts: <code>codex -p work</code> versus <code>codex-ground-loop</code>, and plain <code>claude</code> versus <code>claude-ground-loop</code>.</li>
+        <li>Define a host-neutral core contract, host adapter contract and optional workspace configuration schema before choosing packaging technology.</li>
+        <li>Define status, reflection, scout and verification output contracts.</li>
+        <li>Define privacy-safe source fields and retention.</li>
+      </ul>
+      <h4>Exit criteria</h4>
+      <ul>
+        <li>At least ten representative session/task scenarios.</li>
+        <li>Every proposed plan item maps to a mission outcome.</li>
+        <li>No implementation begins without a measurable baseline.</li>
+      </ul>
+    </article>
+
+    <article class="phase">
+      <h3>Phase 1 - Groundloop status core <span class="tag">3-5 days</span></h3>
+      <p><strong>Mission support:</strong> make current project understanding visible and honest.</p>
+      <h4>Work</h4>
+      <ul>
+        <li>Create a bounded, portable project configuration for repositories, baseline refs, guidance sources and freshness thresholds.</li>
+        <li>Create a cross-platform status core with stable human and JSON output; keep platform-specific process and path handling behind adapters.</li>
+        <li>Track last successful remote refresh, reviewed commit, report timestamps, skill validation and due verifications.</li>
+        <li>Use atomic state updates in a per-user Groundloop data directory keyed by workspace identity, not inside the product repository.</li>
+        <li>Add focused fixtures for current, changed, stale, partial, dirty and rewritten-history states.</li>
+      </ul>
+      <h4>Exit criteria</h4>
+      <ul>
+        <li>Status is accurate across all configured repositories.</li>
+        <li>Normal local execution completes within two seconds.</li>
+        <li>State can be deleted and rebuilt safely.</li>
+        <li>No secret-bearing source is read or printed.</li>
+      </ul>
+    </article>
+
+    <article class="phase">
+      <h3>Phase 2 - Daily reflection closes the loop <span class="tag">3-5 days</span></h3>
+      <p><strong>Mission support:</strong> turn daily experience into practical improvements and verify previous ones.</p>
+      <h4>Work</h4>
+      <ul>
+        <li>Update <code>reflect-on-development</code> with checkpoint, verification and scout-routing steps.</li>
+        <li>Add launcher-owned, post-session failure fingerprints, correction correlation, recurrence thresholds and retirement to the soft ledger without per-tool hooks.</li>
+        <li>Add previous-proposal review to the HTML report contract.</li>
+        <li>Record the exact repository cutoffs covered by each successful report.</li>
+        <li>Keep reports decision-led and accept an empty improvement result.</li>
+        <li>Validate the skill and refresh its Codex/Claude metadata and links.</li>
+      </ul>
+      <h4>Exit criteria</h4>
+      <ul>
+        <li>Three consecutive real daily reviews complete without duplicate or invented lessons.</li>
+        <li>At least one previous improvement receives an evidence-based verification decision.</li>
+        <li>The next review starts from the previous successful cutoff.</li>
+      </ul>
+    </article>
+
+    <article class="phase">
+      <h3>Phase 3 - Cross-agent SessionStart summary <span class="tag">2-4 days</span></h3>
+      <p><strong>Mission support:</strong> begin every session with current, concise orientation.</p>
+      <h4>Work</h4>
+      <ul>
+        <li>Create one startup-status script that consumes SessionStart JSON and calls the status core.</li>
+        <li>Add thin Claude and Codex output formatting only where their contracts differ.</li>
+        <li>Create <code>codex-ground-loop</code> and <code>claude-ground-loop</code> launchers that preserve arguments, use the developer's existing configuration, enable Groundloop only for that process and apply each host's explicit unattended permission-bypass mode.</li>
+        <li>Package shared skills, status command and host-specific hooks behind Codex and Claude plugin manifests from one source tree.</li>
+        <li>Install user-level, treatment-gated hooks without placing helpers in product repos.</li>
+        <li>Test startup, resume, clear and compact events in both clients.</li>
+        <li>Confirm the summary is visible to the user and available to the model.</li>
+      </ul>
+      <h4>Exit criteria</h4>
+      <ul>
+        <li>Eight-line summary appears correctly in both clients.</li>
+        <li>Current, changes, stale, partial and hook-failure cases are distinguishable.</li>
+        <li>Hook failure never prevents a session from starting.</li>
+        <li>No full skill body, thread digest or network research runs from the hook.</li>
+        <li>Baseline commands produce no Groundloop summary; treatment launchers use the same underlying model, permission and work configuration.</li>
+      </ul>
+    </article>
+
+    <article class="phase">
+      <h3>Phase 4 - Improvement scout skill <span class="tag">3-5 days</span></h3>
+      <p><strong>Mission support:</strong> create deliberate opportunities for step-change improvement.</p>
+      <h4>Work</h4>
+      <ul>
+        <li>Initialise <code>scout-development-improvements</code> with the standard skill creator.</li>
+        <li>Keep SKILL.md concise; use a reference only for the comparison and proposal rubric.</li>
+        <li>Generate Codex UI metadata and make the shared skill available to Claude.</li>
+        <li>Test triggers that distinguish reflection from scouting.</li>
+        <li>Run three real scout scenarios: suggest a skill, evaluate a technology and propose a learning topic.</li>
+      </ul>
+      <h4>Exit criteria</h4>
+      <ul>
+        <li>Every scout output is grounded in a current workspace opportunity.</li>
+        <li>It recommends one bounded experiment rather than a technology list.</li>
+        <li>It checks existing capabilities before proposing a new skill or tool.</li>
+        <li>No installation or workspace change occurs in proposal mode.</li>
+      </ul>
+    </article>
+
+    <article class="phase">
+      <h3>Phase 5 - Scheduling and verification cadence <span class="tag">2-3 days</span></h3>
+      <p><strong>Mission support:</strong> make improvement daily and self-checking without relying on memory.</p>
+      <h4>Work</h4>
+      <ul>
+        <li>After five successful manual runs, schedule the daily reflection in proposal mode.</li>
+        <li>Run the scout weekly or only when a high-value unresolved opportunity is queued.</li>
+        <li>Include open verification dates in startup status and daily reports.</li>
+        <li>Keep scheduled work at workspace scope and read-only unless separately authorised.</li>
+        <li>Review the first five scheduled runs and tune cadence/output.</li>
+      </ul>
+      <h4>Exit criteria</h4>
+      <ul>
+        <li>Daily review runs reliably on working days or reports why it did not.</li>
+        <li>Scout does not run merely to fill a weekly report.</li>
+        <li>Every adopted enhancement has a follow-up date and success signal.</li>
+      </ul>
+    </article>
+
+    <article class="phase">
+      <h3>Phase 6 - Thirty-day dogfood evaluation <span class="tag">30 days</span></h3>
+      <p><strong>Mission support:</strong> prove that the loop creates meaningful daily value.</p>
+      <h4>Work</h4>
+      <ul>
+        <li>Use Groundloop across at least twenty real development sessions and retain a comparable set of baseline sessions.</li>
+        <li>Compare matched task categories across launcher cohorts for time to confident work, repeated investigations, delivery omissions and improvement adoption.</li>
+        <li>Review false/stale startup claims and irrelevant reflection/scout proposals.</li>
+        <li>Calculate maintenance effort against conservatively estimated time saved.</li>
+        <li>Decide continue, narrow, absorb into existing skills or stop.</li>
+      </ul>
+      <h4>Exit criteria</h4>
+      <ul>
+        <li>Mission metrics meet the gates in section 9.</li>
+        <li>The workflow remains useful after novelty fades.</li>
+        <li>A clear decision is made before MCP or publication work begins.</li>
+      </ul>
+    </article>
+
+    <article class="phase">
+      <h3>Phase 7 - Productisation decision <span class="tag">gated</span></h3>
+      <p><strong>Mission support:</strong> expand access only if it preserves the proven experience.</p>
+      <h4>Possible next step</h4>
+      <ul>
+        <li>Promote the already dogfooded dual-host package into Codex and Claude marketplace distribution.</li>
+        <li>Publish one installer with <code>install</code>, <code>init</code>, <code>doctor</code>, <code>update</code> and <code>uninstall</code> lifecycle commands.</li>
+        <li>Add a small MCP only if multiple hosts need live shared status or action interfaces.</li>
+        <li>Publish registry metadata only after external alpha users return voluntarily.</li>
+        <li>Keep code-intelligence and document systems composable rather than rebuilding them.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section id="evaluation">
+    <h2>9. Evaluation framework</h2>
+    <table>
+      <tr><th>Mission outcome</th><th>Metric</th><th>Working gate</th></tr>
+      <tr><td>Current understanding</td><td>Startup status accuracy and freshness.</td><td>No unsupported CURRENT result; fewer than 5% incorrect/partial classifications.</td></tr>
+      <tr><td>Faster grounding</td><td>Time from session start to confident relevant action.</td><td>30% median reduction across representative tasks.</td></tr>
+      <tr><td>Relevant guidance</td><td>Required-source recall and irrelevant-context rate.</td><td>At least 90% required-source recall with decreasing unnecessary reads.</td></tr>
+      <tr><td>Capitalised experience</td><td>Repeated investigations avoided or shortened.</td><td>At least three credible cases during dogfood.</td></tr>
+      <tr><td>Daily improvement</td><td>Useful enhancements proposed and adopted.</td><td>At least two adopted improvements remain useful after review.</td></tr>
+      <tr><td>Proven improvement</td><td>Adopted proposals receiving verification decisions.</td><td>100% have an expected outcome and review date; at least 80% are reviewed on time.</td></tr>
+      <tr><td>Step-change exploration</td><td>Scout proposals taken to an experiment.</td><td>At least one worthwhile experiment; no unfocused recommendation lists.</td></tr>
+      <tr><td>Groundloop contribution</td><td>Matched baseline versus treatment launcher sessions.</td><td>Improvement appears in more than one task category without changing the underlying work profile.</td></tr>
+      <tr><td>Leanness</td><td>Maintenance effort and voluntary continued use.</td><td>Maintenance below 25% of estimated savings; use in 70% of eligible sessions.</td></tr>
+    </table>
+
+    <h3>Evaluation scenarios</h3>
+    <ul>
+      <li>Resume after a day with new commits on multiple develop branches.</li>
+      <li>Start from a feature branch with dirty changes.</li>
+      <li>Daily reflection after no material work.</li>
+      <li>Repeated script or local environment failure.</li>
+      <li>A failed command followed by a correction, then a similar task in a later session.</li>
+      <li>Recurring PR evidence or ticket-link omission.</li>
+      <li>Verify a previously adopted test, script or skill improvement.</li>
+      <li>Scout an existing skill before proposing a new one.</li>
+      <li>Scout a current technology with a plausible workflow benefit.</li>
+      <li>Scout a learning topic that could remove a recurring capability gap.</li>
+      <li>Operate when a repository, network or hook component is unavailable.</li>
+      <li>Run baseline and Groundloop launchers with identical forwarded arguments and confirm only the treatment receives Groundloop context.</li>
+      <li>Install, initialise, diagnose and uninstall in a clean Windows, macOS and Linux test workspace without modifying a product repository.</li>
+    </ul>
+  </section>
+
+  <section id="traceability">
+    <h2>10. Mission traceability</h2>
+    <table>
+      <tr><th>Plan element</th><th>Keep understanding current</th><th>Apply to work at hand</th><th>Turn experience into simpler proven practice</th></tr>
+      <tr><td>Repository/status core</td><td>Primary</td><td>Signals changed areas</td><td>Supplies evidence for review</td></tr>
+      <tr><td>SessionStart summary</td><td>Primary</td><td>Highlights immediate attention</td><td>Shows due improvement work</td></tr>
+      <tr><td>Opt-in launchers</td><td>Expose a grounded treatment</td><td>Preserve the developer's chosen work configuration</td><td>Make value measurable against ordinary sessions</td></tr>
+      <tr><td>Portable plugin and local project adapter</td><td>Consistent core across hosts</td><td>Adapts to each developer's sources</td><td>Allows proven practice to travel without copying workspace internals</td></tr>
+      <tr><td>Workspace instructions and domain skills</td><td>Use current source</td><td>Primary</td><td>Receive promoted learning</td></tr>
+      <tr><td>Operational lesson lifecycle</td><td>Tracks whether a failure pattern is still active</td><td>Stays outside the active session</td><td>Automates, verifies and retires repeated corrections during reflection</td></tr>
+      <tr><td>Daily reflection</td><td>Checks latest delta</td><td>Uses task outcomes</td><td>Primary</td></tr>
+      <tr><td>Improvement scout</td><td>Uses current capabilities</td><td>Grounds options in actual needs</td><td>Creates step-change experiments</td></tr>
+      <tr><td>Verification cadence</td><td>Refreshes conclusions</td><td>Measures in real work</td><td>Primary proof mechanism</td></tr>
+      <tr><td>Scheduled daily run</td><td>Keeps status/review timely</td><td>Avoids manual recall</td><td>Makes improvement continuous</td></tr>
+      <tr><td>Dogfood metrics</td><td>Tests accuracy</td><td>Tests relevance</td><td>Tests lasting value and leanness</td></tr>
+    </table>
+    <p class="small">Feature gate: if a proposed addition has no strong cell in this table, it does not enter the plan.</p>
+  </section>
+
+  <section id="structure">
+    <h2>11. Portable product and installation structure</h2>
+
+    <h3>Groundloop distribution repository</h3>
+    <pre><code>groundloop/
+  .codex-plugin/
+    plugin.json                       # Codex package manifest
+  .claude-plugin/
+    plugin.json                       # Claude package manifest
+  skills/
+    reflect-on-development/
+      SKILL.md
+      scripts/
+        collect-thread-digest.*
+    scout-development-improvements/
+      SKILL.md
+      references/
+        proposal-rubric.md            # only if evidence justifies it
+  hooks/
+    hooks.json                        # shared events; host detected at runtime
+  src/groundloop/
+    cli.py                            # status, reflection and lifecycle CLI
+    launchers.py                      # Codex/Claude treatment launchers
+    status.py                         # host-neutral freshness logic
+    state.py                          # soft ledger and lesson lifecycle
+    sessions.py                       # privacy-filtered thread digests
+    installer.py                      # install, update, doctor and uninstall
+    config.py                         # project discovery and configuration
+  schemas/
+    project-config.schema.json
+    state.schema.json
+  tests/
+    contracts/                        # host and output contracts
+    fixtures/                         # Git, failure and freshness scenarios
+  pyproject.toml                      # cross-platform package and PATH commands
+  README.md                           # human installation and trust guidance</code></pre>
+
+    <h3>Installed developer state</h3>
+    <pre><code>~/.groundloop/                         # OS-appropriate user data/config root
+  config.*                            # host choices and default Codex profile
+  shims/                              # PATH launchers
+  projects/
+    &lt;workspace-id&gt;/
+      project.*                       # private workspace configuration
+      state.json                      # rebuildable soft ledger
+      reports/                        # reflection and scout HTML
+      locks/                          # transient
+  cache/                              # replaceable plugin/source cache</code></pre>
+
+    <h3>Workspace footprint</h3>
+    <p><strong>Default:</strong> no files are written into the workspace. <code>groundloop init</code> discovers bounded Git repositories and stores a private configuration under the user data directory. A team may explicitly choose <code>groundloop init --shared</code> to create one reviewable project file such as <code>.groundloop/project.yaml</code>; generated state, reports and thread-derived data remain outside product repositories.</p>
+
+    <h3>One-command onboarding target</h3>
+    <pre><code># Package-manager or signed release installation; exact channel chosen in Phase 0
+&lt;install groundloop&gt;
+
+groundloop install --hosts codex,claude --codex-profile work
+cd &lt;workspace&gt;
+groundloop init
+groundloop doctor
+
+codex-ground-loop
+claude-ground-loop</code></pre>
+    <p><code>install</code> registers or locates the dual-host plugin, creates launch shims and validates host versions. <code>init</code> configures project sources. <code>doctor</code> proves hook visibility, permissions, state rebuildability and baseline isolation. <code>uninstall</code> removes only Groundloop-owned files and registrations.</p>
+  </section>
+
+  <section id="gates">
+    <h2>12. Release and scope gates</h2>
+    <table>
+      <tr><th>Decision</th><th>Gate</th></tr>
+      <tr><td>Enable the Groundloop launcher trial</td><td>Argument forwarding, <code>work</code>-profile delegation, treatment marking and baseline isolation pass on both hosts.</td></tr>
+      <tr><td>Enable SessionStart hook by default</td><td>Cross-agent visibility, latency, trust and failure tests pass.</td></tr>
+      <tr><td>Schedule daily reflection</td><td>Five useful manual runs complete without noisy or invented improvements.</td></tr>
+      <tr><td>Create the scout skill</td><td>The daily reflection has a clear exploration boundary and three concrete scout scenarios.</td></tr>
+      <tr><td>Schedule the scout</td><td>At least two on-demand scout runs produce useful bounded experiments.</td></tr>
+      <tr><td>Add a document integration</td><td>Repeated evidence shows a particular missing source materially weakens the mission.</td></tr>
+      <tr><td>Add MCP</td><td>Skills/scripts/hooks prove value and at least two hosts need a shared live interface.</td></tr>
+      <tr><td>Publish install packages</td><td>Clean-machine install, doctor, update and uninstall pass on Windows, macOS and Linux; no workspace-specific path or product name is required.</td></tr>
+      <tr><td>Publish publicly</td><td>Dogfood passes and at least three of five alpha users return for multiple sessions.</td></tr>
+    </table>
+
+    <div class="callout good"><strong>Recommended starting commitment:</strong> complete Phases 0-3 and use the daily reflection manually. Build the scout in Phase 4, after the reflection/scout boundary has been exercised with real opportunities. Do not commit to MCP or public release until the thirty-day result.</div>
+  </section>
+
+  <section id="references">
+    <h2>13. Current platform references</h2>
+    <ul>
+      <li><a href="https://developers.openai.com/codex/skills">Codex skills</a> - progressive disclosure, implicit/explicit invocation and skill locations.</li>
+      <li><a href="https://developers.openai.com/codex/hooks">Codex hooks</a> - SessionStart lifecycle, trust and hook execution.</li>
+      <li><a href="https://developers.openai.com/codex/app/automations">Codex scheduled tasks</a> - skill-driven daily or weekly workflows.</li>
+      <li><a href="https://learn.chatgpt.com/docs/config-file/config-advanced#profiles">Codex configuration profiles</a> - <code>--profile</code> overlays and profile-file locations.</li>
+      <li><a href="https://learn.chatgpt.com/docs/build-plugins">Codex plugin authoring</a> - dual-purpose packaging of skills, hooks and optional MCP configuration.</li>
+      <li><a href="https://code.claude.com/docs/en/hooks">Claude Code hooks</a> - SessionStart context and lifecycle contract.</li>
+      <li><a href="https://code.claude.com/docs/en/slash-commands">Claude Code skills</a> - discovery and on-demand loading.</li>
+      <li><a href="https://code.claude.com/docs/en/cli-reference">Claude Code CLI</a> - session-only plugin and settings flags.</li>
+      <li><a href="https://code.claude.com/docs/en/plugins">Claude Code plugins</a> - shared skills, hooks and plugin layout.</li>
+      <li><a href="https://code.claude.com/docs/en/plugin-marketplaces">Claude Code plugin marketplaces</a> - Git-backed installation, versioning and updates.</li>
+      <li><a href="../skills/reflect-on-development/SKILL.md">Current reflect-on-development skill</a>.</li>
+      <li><a href="groundloop-viability-assessment.html">Groundloop mission and product architecture</a>.</li>
+    </ul>
+    <p class="small">Platform behaviour was checked against current official Codex and Claude documentation on 22 July 2026. Hook compatibility must still be verified against the installed client versions during Phase 3.</p>
+  </section>
+
+  <footer>
+    <p>Groundloop mission delivery plan - portable product architecture - first dogfood environment: a local multi-repository workspace.</p>
+  </footer>
+</main>
+</body>
+</html>
