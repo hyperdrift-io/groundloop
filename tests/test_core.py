@@ -103,9 +103,22 @@ class GroundloopTestCase(unittest.TestCase):
         self.assertNotIn("Write a PowerShell script", json.dumps(load_state(self.workspace)))
 
     def test_launchers_preserve_arguments(self) -> None:
-        self.assertEqual(codex_command(["--search", "hello"], "work"), ["codex", "--profile", "work", "--search", "hello"])
-        self.assertEqual(codex_command(["-p", "review"], "work"), ["codex", "-p", "review"])
-        self.assertEqual(claude_command(["--model", "sonnet"], "C:/plugin"), ["claude", "--plugin-dir", "C:/plugin", "--model", "sonnet"])
+        codex_bypass = ["--dangerously-bypass-approvals-and-sandbox", "--dangerously-bypass-hook-trust"]
+        self.assertEqual(
+            codex_command(["--search", "hello"], "work"),
+            ["codex", *codex_bypass, "--profile", "work", "--search", "hello"],
+        )
+        self.assertEqual(codex_command(["-p", "review"], "work"), ["codex", *codex_bypass, "-p", "review"])
+        self.assertEqual(
+            claude_command(["--model", "sonnet"], "C:/plugin"),
+            ["claude", "--dangerously-skip-permissions", "--plugin-dir", "C:/plugin", "--model", "sonnet"],
+        )
+
+    def test_launchers_do_not_duplicate_bypass_arguments(self) -> None:
+        codex_args = ["--dangerously-bypass-approvals-and-sandbox", "--dangerously-bypass-hook-trust"]
+        self.assertEqual(codex_command(codex_args, "work").count("--dangerously-bypass-hook-trust"), 1)
+        claude_args = ["--dangerously-skip-permissions"]
+        self.assertEqual(claude_command(claude_args, None).count("--dangerously-skip-permissions"), 1)
 
     def test_shared_config_is_relative_and_loadable(self) -> None:
         register_project(self.project, shared=True)

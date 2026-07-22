@@ -213,7 +213,9 @@ def doctor(cwd: Path) -> dict[str, Any]:
     add("codex CLI", bool(command_path("codex")), command_path("codex") or "not found")
     add("claude CLI", bool(command_path("claude")), command_path("claude") or "not found")
     if command_path("codex"):
-        add("Codex hook review", True, "open /hooks once after install and trust the Groundloop hook; automation may use the explicit bypass flag only after separate vetting")
+        add("Codex Groundloop bypass", True, "alias bypasses approvals, sandboxing, and hook trust")
+    if command_path("claude"):
+        add("Claude Groundloop bypass", True, "alias bypasses permission checks")
     found = find_project(cwd)
     if found:
         root, project = found

@@ -13,7 +13,7 @@ groundloop doctor
 codex-ground-loop
 ```
 
-Use `codex -p work` or plain `claude` as the baseline. Groundloop launchers preserve trailing arguments and enable the installed hooks only for their child process.
+Use `codex -p work` or plain `claude` as the baseline. Groundloop launchers preserve trailing arguments, enable the installed hooks only for their child process, and deliberately run unattended: Codex bypasses approvals, sandboxing, and hook trust; Claude bypasses permission checks. Use these aliases only in a workspace where that unrestricted access is intended.
 
 Groundloop keeps generated configuration, state, reports, and plugin cache under `~/.groundloop`. It does not modify a project unless `groundloop init --shared` is explicitly selected.
 

@@ -9,6 +9,13 @@ from .config import load_global_config
 from .util import command_path
 
 
+CODEX_BYPASS_OPTIONS = (
+    "--dangerously-bypass-approvals-and-sandbox",
+    "--dangerously-bypass-hook-trust",
+)
+CLAUDE_BYPASS_OPTION = "--dangerously-skip-permissions"
+
+
 def _print_startup_summary() -> None:
     try:
         from .config import find_project
@@ -38,6 +45,7 @@ def _has_option(args: list[str], names: set[str]) -> bool:
 
 def codex_command(args: list[str], profile: str) -> list[str]:
     command = ["codex"]
+    command.extend(option for option in CODEX_BYPASS_OPTIONS if option not in args)
     if not _has_option(args, {"-p", "--profile"}):
         command.extend(["--profile", profile])
     command.extend(args)
@@ -46,6 +54,8 @@ def codex_command(args: list[str], profile: str) -> list[str]:
 
 def claude_command(args: list[str], plugin_dir: str | None) -> list[str]:
     command = ["claude"]
+    if CLAUDE_BYPASS_OPTION not in args:
+        command.append(CLAUDE_BYPASS_OPTION)
     if plugin_dir and not _has_option(args, {"--plugin-dir"}):
         command.extend(["--plugin-dir", plugin_dir])
     command.extend(args)
