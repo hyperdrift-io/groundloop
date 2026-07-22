@@ -24,7 +24,10 @@ from .installer import doctor, install, uninstall
 from .sessions import create_digest
 from .state import change_lesson, default_state, load_state, mutate_state, observe_lesson, save_state
 from .status import build_status, format_status
-from .util import iso_now, now_utc, parse_time
+from .util import iso_now, now_utc, parse_time, record_runtime_failure
+
+
+HOOK_INPUT_LIMIT = 4 * 1024 * 1024
 
 
 def _json(value: Any) -> None:
@@ -167,13 +170,34 @@ def command_lesson(args: argparse.Namespace) -> int:
     return 0 if found else 1
 
 
+def _read_hook_input(limit: int = HOOK_INPUT_LIMIT) -> str | None:
+    chunks: list[str] = []
+    size = 0
+    oversized = False
+    while chunk := sys.stdin.read(64 * 1024):
+        size += len(chunk)
+        if size <= limit:
+            chunks.append(chunk)
+        else:
+            oversized = True
+    return None if oversized else "".join(chunks)
+
+
 def command_hook(args: argparse.Namespace) -> int:
-    raw = sys.stdin.read(1_000_000)
+    raw = _read_hook_input()
+    if raw is None:
+        record_runtime_failure(args.event, "PayloadTooLarge")
+        return 0
     try:
         payload = json.loads(raw) if raw.strip() else {}
     except json.JSONDecodeError:
-        payload = {}
-    output = handle_hook(args.host, args.event, payload)
+        record_runtime_failure(args.event, "InvalidJSON")
+        return 0
+    try:
+        output = handle_hook(args.host, args.event, payload)
+    except Exception as error:  # Hooks must never interrupt the agent session.
+        record_runtime_failure(args.event, type(error).__name__)
+        return 0
     if output:
         sys.stdout.write(output)
     return 0

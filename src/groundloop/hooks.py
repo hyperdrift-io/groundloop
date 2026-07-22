@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .config import find_project
-from .state import load_state, observe_lesson, record_session
+from .state import record_session
 from .status import build_status, format_status
 from .util import redact
 
@@ -15,7 +15,8 @@ from .util import redact
 ISSUE_PATTERNS = (
     re.compile(r"(?i)exit code[:=]\s*(-?\d+)"),
     re.compile(r"(?i)\b(script failed|script error|error:|parsererror|traceback)\b"),
-    re.compile(r"(?i)\b(invalid escap|unrecognized flag|not recognized as|deprecated|will be removed)\b"),
+    re.compile(r"(?i)\b(invalid escap|unrecognized flag|not recognized as)\b"),
+    re.compile(r"(?i)\b(futurewarning|deprecationwarning|runtimewarning|userwarning|warning:)\b"),
 )
 
 
@@ -32,6 +33,13 @@ def detect_host(requested: str) -> str:
 def _text(value: Any) -> str:
     if isinstance(value, str):
         return value
+    if isinstance(value, list):
+        return "\n".join(filter(None, (_text(item) for item in value)))
+    if isinstance(value, dict):
+        preferred = ("output", "stderr", "error", "message", "content", "text")
+        parts = [_text(value[key]) for key in preferred if key in value]
+        if parts:
+            return "\n".join(filter(None, parts))
     try:
         return json.dumps(value, ensure_ascii=False)
     except (TypeError, ValueError):
@@ -43,17 +51,25 @@ def failure_excerpt(payload: dict[str, Any]) -> str | None:
     text = _text(response)
     if not text:
         return None
+    explicitly_failed = isinstance(response, dict) and (
+        response.get("success") is False
+        or response.get("status") in {"failed", "error"}
+        or isinstance(response.get("exit_code"), int)
+        and response["exit_code"] != 0
+        or isinstance(response.get("returncode"), int)
+        and response["returncode"] != 0
+    )
     exit_match = ISSUE_PATTERNS[0].search(text)
     if exit_match and int(exit_match.group(1)) == 0:
         exit_match = None
-    if not exit_match and not any(pattern.search(text) for pattern in ISSUE_PATTERNS[1:]):
+    if not explicitly_failed and not exit_match and not any(pattern.search(text) for pattern in ISSUE_PATTERNS[1:]):
         return None
     marker = next((match for pattern in ISSUE_PATTERNS for match in [pattern.search(text)] if match), None)
     start = max(0, marker.start() - 100) if marker else 0
     return redact(text[start : start + 800], 700)
 
 
-def _lesson_tags(text: str) -> list[str]:
+def lesson_tags(text: str) -> list[str]:
     lowered = text.lower()
     known = {
         "powershell": ("powershell", "parsererror", "variable reference"),
@@ -63,20 +79,6 @@ def _lesson_tags(text: str) -> list[str]:
         "javascript": ("node", "npm", "yarn", "typescript"),
     }
     return [tag for tag, needles in known.items() if any(needle in lowered for needle in needles)]
-
-
-def _relevant_lessons(root: Path, prompt: str) -> list[dict[str, Any]]:
-    tokens = set(re.findall(r"[a-z][a-z0-9_-]{2,}", prompt.lower()))
-    lessons = [item for item in load_state(root).get("operational_lessons", []) if item.get("status") == "active"]
-    scored: list[tuple[int, dict[str, Any]]] = []
-    for lesson in lessons:
-        haystack = " ".join(
-            [lesson.get("category") or "", lesson.get("symptom") or "", lesson.get("resolution") or "", *lesson.get("tags", [])]
-        ).lower()
-        score = sum(1 for token in tokens if token in haystack)
-        if score or any(tag in tokens for tag in lesson.get("tags", [])):
-            scored.append((score, lesson))
-    return [lesson for _, lesson in sorted(scored, key=lambda pair: pair[0], reverse=True)[:2]]
 
 
 def handle_hook(host: str, event: str, payload: dict[str, Any]) -> str:
@@ -91,29 +93,14 @@ def handle_hook(host: str, event: str, payload: dict[str, Any]) -> str:
     session_id = str(payload.get("session_id") or payload.get("sessionId") or "")
 
     if event == "session-start":
-        record_session(root, session_id, resolved_host, os.environ.get("GROUNDLOOP_VARIANT", "treatment"))
+        record_session(
+            root,
+            session_id,
+            resolved_host,
+            os.environ.get("GROUNDLOOP_VARIANT", "treatment"),
+            launch_id=os.environ.get("GROUNDLOOP_LAUNCH_ID"),
+        )
         return format_status(build_status(root, project)) + "\n"
-
-    if event == "post-tool":
-        excerpt = failure_excerpt(payload)
-        if excerpt:
-            observe_lesson(
-                root,
-                symptom=excerpt,
-                category="scripts/tooling",
-                session_id=session_id or None,
-                tags=_lesson_tags(excerpt),
-            )
-        return ""
-
-    if event == "user-prompt":
-        prompt = str(payload.get("prompt") or "")
-        lessons = _relevant_lessons(root, prompt)
-        if not lessons:
-            return ""
-        lines = ["Groundloop relevant operational lessons:"]
-        for lesson in lessons:
-            resolution = lesson.get("resolution") or "Review the recorded symptom before repeating the workflow."
-            lines.append(f"- {lesson['symptom']}: {resolution}")
-        return redact("\n".join(lines), 900) + "\n"
+    # Compatibility for sessions that loaded an older plugin definition.
+    # Learning is deliberately deferred until the launcher-owned child process exits.
     return ""

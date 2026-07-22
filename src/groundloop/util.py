@@ -97,3 +97,17 @@ def is_within(child: Path, parent: Path) -> bool:
         return True
     except ValueError:
         return False
+
+
+def record_runtime_failure(event: str, error_type: str) -> None:
+    """Persist only bounded metadata; payloads and exception messages may contain secrets."""
+    try:
+        home = Path(os.environ.get("GROUNDLOOP_HOME", Path.home() / ".groundloop")).expanduser().resolve()
+        path = home / "hook-errors.jsonl"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if path.exists() and path.stat().st_size > 64 * 1024:
+            path.write_text("", encoding="utf-8")
+        with path.open("a", encoding="utf-8", newline="\n") as stream:
+            stream.write(json.dumps({"at": iso_now(), "event": event, "error_type": error_type}, ensure_ascii=True) + "\n")
+    except OSError:
+        pass

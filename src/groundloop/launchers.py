@@ -3,10 +3,11 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import uuid
 from pathlib import Path
 
 from .config import load_global_config
-from .util import command_path
+from .util import command_path, record_runtime_failure
 
 
 CODEX_BYPASS_OPTIONS = (
@@ -62,11 +63,29 @@ def claude_command(args: list[str], plugin_dir: str | None) -> list[str]:
     return command
 
 
-def treatment_environment() -> dict[str, str]:
+def treatment_environment(launch_id: str | None = None) -> dict[str, str]:
     env = os.environ.copy()
     env["GROUNDLOOP_ENABLED"] = "1"
     env["GROUNDLOOP_VARIANT"] = "treatment"
+    env["GROUNDLOOP_LAUNCH_ID"] = launch_id or uuid.uuid4().hex
     return env
+
+
+def _run_groundloop_session(command: list[str], host: str) -> int:
+    launch_id = uuid.uuid4().hex
+    try:
+        return _run(command, treatment_environment(launch_id))
+    finally:
+        try:
+            from .config import find_project
+            from .sessions import finalize_session
+
+            found = find_project(Path.cwd())
+            if found:
+                finalize_session(found[0], host, launch_id)
+        except Exception as error:
+            # The agent has already exited; learning must not alter its exit status.
+            record_runtime_failure("session-finalize", type(error).__name__)
 
 
 def codex_main() -> None:
@@ -74,7 +93,7 @@ def codex_main() -> None:
     if not command_path("codex"):
         raise SystemExit("Codex is not installed or is not on PATH.")
     _print_startup_summary()
-    raise SystemExit(_run(codex_command(sys.argv[1:], config.get("codex_profile", "work")), treatment_environment()))
+    raise SystemExit(_run_groundloop_session(codex_command(sys.argv[1:], config.get("codex_profile", "work")), "codex"))
 
 
 def claude_main() -> None:
@@ -85,7 +104,7 @@ def claude_main() -> None:
     if plugin_dir and not Path(plugin_dir).exists():
         raise SystemExit("Groundloop plugin cache is missing; run groundloop install.")
     _print_startup_summary()
-    raise SystemExit(_run(claude_command(sys.argv[1:], plugin_dir), treatment_environment()))
+    raise SystemExit(_run_groundloop_session(claude_command(sys.argv[1:], plugin_dir), "claude"))
 
 
 def main() -> None:

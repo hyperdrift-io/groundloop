@@ -76,21 +76,33 @@ def mutate_state(root: Path, operation) -> dict[str, Any]:
         return state
 
 
-def record_session(root: Path, session_id: str, host: str, variant: str) -> None:
+def record_session(root: Path, session_id: str, host: str, variant: str, launch_id: str | None = None) -> None:
     if not session_id:
         return
 
     def update(state: dict[str, Any]) -> None:
         sessions = state.setdefault("sessions", [])
-        if not any(item.get("session_id") == session_id for item in sessions):
-            sessions.append({"session_id": session_id, "host": host, "variant": variant, "started_at": iso_now()})
+        existing = next((item for item in sessions if item.get("session_id") == session_id), None)
+        if existing is None:
+            sessions.append(
+                {
+                    "session_id": session_id,
+                    "host": host,
+                    "variant": variant,
+                    "launch_id": launch_id,
+                    "started_at": iso_now(),
+                }
+            )
             del sessions[:-100]
+        elif launch_id:
+            existing["launch_id"] = launch_id
 
     mutate_state(root, update)
 
 
 def _normalise_signature(text: str) -> str:
     value = redact(text, 700).lower()
+    value = re.sub(r"\b[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b", "<uuid>", value)
     value = re.sub(r"\b[0-9a-f]{7,40}\b", "<hash>", value)
     value = re.sub(r"\b\d+\b", "<n>", value)
     value = re.sub(r"\s+", " ", value).strip()

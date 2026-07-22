@@ -7,7 +7,8 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from .config import reports_dir
-from .hooks import failure_excerpt
+from .hooks import failure_excerpt, lesson_tags
+from .state import load_state, mutate_state, observe_lesson
 from .util import atomic_write_json, iso_now, now_utc, redact
 
 
@@ -142,6 +143,109 @@ def _claude_sessions(cutoff_timestamp: float, workspace: Path, limit: int) -> li
                 }
             )
     return sessions
+
+
+def _session_file(host: str, session_id: str) -> Path | None:
+    if host == "codex":
+        root = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")) / "sessions"
+        pattern = f"*{session_id}.jsonl"
+    elif host == "claude":
+        root = Path.home() / ".claude" / "projects"
+        pattern = f"{session_id}.jsonl"
+    else:
+        return None
+    if not root.exists():
+        return None
+    return next((path for path in root.rglob(pattern) if path.is_file()), None)
+
+
+def _closed_session_failures(host: str, path: Path, limit: int = 25) -> list[dict[str, str]]:
+    failures: list[dict[str, str]] = []
+    calls: dict[str, str] = {}
+    if host == "codex":
+        for record in _json_lines(path):
+            payload = record.get("payload") or {}
+            if record.get("type") == "response_item" and payload.get("type") in {"function_call", "custom_tool_call"}:
+                calls[str(payload.get("call_id") or "")] = str(payload.get("name") or "unknown")
+            elif record.get("type") == "response_item" and payload.get("type") in {
+                "function_call_output",
+                "custom_tool_call_output",
+            }:
+                excerpt = failure_excerpt({"output": payload.get("output")})
+                if excerpt:
+                    failures.append({"tool": calls.get(str(payload.get("call_id") or ""), "unknown"), "excerpt": excerpt})
+                    if len(failures) >= limit:
+                        break
+        return failures
+
+    for record in _json_lines(path):
+        message = record.get("message") or {}
+        content = message.get("content") if isinstance(message, dict) else None
+        if record.get("type") == "assistant":
+            for block in _content_blocks(content):
+                if block.get("type") == "tool_use":
+                    calls[str(block.get("id") or "")] = str(block.get("name") or "unknown")
+            continue
+        if record.get("type") != "user":
+            continue
+        for block in _content_blocks(content):
+            if block.get("type") != "tool_result":
+                continue
+            excerpt = (
+                redact(str(block.get("content") or ""), 700)
+                if block.get("is_error")
+                else failure_excerpt({"output": block.get("content")})
+            )
+            if excerpt:
+                failures.append({"tool": calls.get(str(block.get("tool_use_id") or ""), "unknown"), "excerpt": excerpt})
+                if len(failures) >= limit:
+                    return failures
+    return failures
+
+
+def finalize_session(workspace: Path, host: str, launch_id: str) -> dict[str, Any]:
+    """Process one launcher-owned session after its agent child has exited."""
+    state = load_state(workspace)
+    session = next(
+        (
+            item
+            for item in reversed(state.get("sessions", []))
+            if item.get("launch_id") == launch_id and item.get("host") == host
+        ),
+        None,
+    )
+    if not session:
+        return {"status": "not-recorded", "observations": 0}
+    session_id = str(session.get("session_id") or "")
+    path = _session_file(host, session_id)
+    if path is None:
+        status = "transcript-missing"
+        failures: list[dict[str, str]] = []
+    else:
+        status = "processed"
+        failures = _closed_session_failures(host, path)
+        for failure in failures:
+            observe_lesson(
+                workspace,
+                symptom=failure["excerpt"],
+                category="scripts/tooling",
+                session_id=session_id,
+                tags=lesson_tags(f"{failure['tool']} {failure['excerpt']}"),
+            )
+
+    def close(current: dict[str, Any]) -> None:
+        match = next((item for item in current.setdefault("sessions", []) if item.get("session_id") == session_id), None)
+        if match:
+            match.update(
+                {
+                    "closed_at": iso_now(),
+                    "learning_status": status,
+                    "observations": len(failures),
+                }
+            )
+
+    mutate_state(workspace, close)
+    return {"status": status, "session_id": session_id, "observations": len(failures)}
 
 
 def create_digest(workspace: Path, since_hours: int, max_sessions: int = 100) -> tuple[Path, dict[str, Any]]:

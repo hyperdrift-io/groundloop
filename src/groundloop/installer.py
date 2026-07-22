@@ -10,7 +10,7 @@ from typing import Any
 
 from . import __version__
 from .config import groundloop_home, load_global_config, save_global_config
-from .util import atomic_write_json, command_path, is_within, run_process
+from .util import atomic_write_json, command_path, is_within, read_json, run_process
 
 
 PLUGIN_PARTS = (".codex-plugin", ".claude-plugin", "hooks", "skills")
@@ -98,17 +98,20 @@ def _write_shims() -> tuple[Path, bool]:
     destination.mkdir(parents=True, exist_ok=True)
     python = str(Path(sys.executable).resolve())
     if os.name == "nt":
+        legacy_noop = 'if /I "%~1"=="hook" if /I "%~5"=="post-tool" exit /b 0\r\nif /I "%~1"=="hook" if /I "%~5"=="user-prompt" exit /b 0\r\n'
+        shell_legacy_noop = 'if [ "$1" = "hook" ] && { [ "$5" = "post-tool" ] || [ "$5" = "user-prompt" ]; }; then exit 0; fi\n'
         commands = {
-            "groundloop.cmd": f'@echo off\r\nrem {SHIM_MARKER}\r\n"{python}" -m groundloop.cli %*\r\n',
+            "groundloop.cmd": f'@echo off\r\nrem {SHIM_MARKER}\r\n{legacy_noop}"{python}" -m groundloop.cli %*\r\n',
             "codex-ground-loop.cmd": f'@echo off\r\nrem {SHIM_MARKER}\r\n"{python}" -m groundloop.launchers codex %*\r\n',
             "claude-ground-loop.cmd": f'@echo off\r\nrem {SHIM_MARKER}\r\n"{python}" -m groundloop.launchers claude %*\r\n',
-            "groundloop": f'#!/bin/sh\n# {SHIM_MARKER}\nexec "{python.replace(chr(92), "/")}" -m groundloop.cli "$@"\n',
+            "groundloop": f'#!/bin/sh\n# {SHIM_MARKER}\n{shell_legacy_noop}exec "{python.replace(chr(92), "/")}" -m groundloop.cli "$@"\n',
             "codex-ground-loop": f'#!/bin/sh\n# {SHIM_MARKER}\nexec "{python.replace(chr(92), "/")}" -m groundloop.launchers codex "$@"\n',
             "claude-ground-loop": f'#!/bin/sh\n# {SHIM_MARKER}\nexec "{python.replace(chr(92), "/")}" -m groundloop.launchers claude "$@"\n',
         }
     else:
+        shell_legacy_noop = 'if [ "$1" = "hook" ] && { [ "$5" = "post-tool" ] || [ "$5" = "user-prompt" ]; }; then exit 0; fi\n'
         commands = {
-            "groundloop": f'#!/bin/sh\n# {SHIM_MARKER}\nexec "{python}" -m groundloop.cli "$@"\n',
+            "groundloop": f'#!/bin/sh\n# {SHIM_MARKER}\n{shell_legacy_noop}exec "{python}" -m groundloop.cli "$@"\n',
             "codex-ground-loop": f'#!/bin/sh\n# {SHIM_MARKER}\nexec "{python}" -m groundloop.launchers codex "$@"\n',
             "claude-ground-loop": f'#!/bin/sh\n# {SHIM_MARKER}\nexec "{python}" -m groundloop.launchers claude "$@"\n',
         }
@@ -206,6 +209,13 @@ def doctor(cwd: Path) -> dict[str, Any]:
 
     add("groundloop home", groundloop_home().exists(), str(groundloop_home()))
     add("plugin cache", (plugin / ".codex-plugin" / "plugin.json").exists(), str(plugin))
+    hooks = read_json(plugin / "hooks" / "hooks.json", {})
+    configured_events = set(hooks.get("hooks", {}))
+    add(
+        "session non-interference",
+        configured_events == {"SessionStart"},
+        f"configured lifecycle events: {', '.join(sorted(configured_events)) or 'none'}",
+    )
     shim_dir = Path(config.get("shim_dir", _shim_directory()))
     shim_name = "groundloop.cmd" if os.name == "nt" else "groundloop"
     add("launch shims", (shim_dir / shim_name).exists(), str(shim_dir))
