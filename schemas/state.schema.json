@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://groundloop.dev/schemas/state.schema.json",
+  "title": "Groundloop soft ledger",
+  "type": "object",
+  "required": ["schema_version", "workspace", "created_at", "updated_at", "operational_lessons", "proposals"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "workspace": {"type": "string"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"},
+    "last_remote_refresh": {"type": ["string", "null"], "format": "date-time"},
+    "last_reflection": {"type": ["object", "null"]},
+    "sessions": {"type": "array", "items": {"type": "object"}},
+    "operational_lessons": {"type": "array", "items": {"type": "object"}},
+    "proposals": {"type": "array", "items": {"type": "object"}},
+    "scout": {"type": "object"}
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,31 @@
+{
+  "name": "groundloop",
+  "version": "0.1.0+codex.20260722140617",
+  "description": "Keep AI development sessions grounded in current project reality and turn repeated work into verified improvements.",
+  "author": {
+    "name": "Groundloop contributors"
+  },
+  "license": "MIT",
+  "keywords": [
+    "development",
+    "continuous-improvement",
+    "context",
+    "reflection"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Groundloop",
+    "shortDescription": "Start current and improve development daily.",
+    "longDescription": "Groundloop adds concise session grounding, evidence-led development reflection, operational lesson tracking, and focused improvement scouting.",
+    "developerName": "Groundloop contributors",
+    "category": "Productivity",
+    "capabilities": [
+      "Read"
+    ],
+    "defaultPrompt": [
+      "Reflect on recent development and recommend one improvement.",
+      "Check whether this workspace is currently grounded.",
+      "Scout one high-leverage development experiment."
+    ]
+  }
+}

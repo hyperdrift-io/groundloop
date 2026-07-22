@@ -1,0 +1,4 @@
+interface:
+  display_name: "Scout Development Improvements"
+  short_description: "Find one high-leverage workflow experiment"
+  default_prompt: "Use $scout-development-improvements to recommend one bounded improvement experiment."

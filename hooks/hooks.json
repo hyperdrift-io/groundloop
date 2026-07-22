@@ -1,0 +1,44 @@
+{
+  "description": "Opt-in Groundloop context and operational lesson hooks.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "groundloop hook --host auto --event session-start",
+            "commandWindows": "groundloop hook --host auto --event session-start",
+            "timeout": 5,
+            "statusMessage": "Checking Groundloop freshness"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|PowerShell|powershell|shell_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "groundloop hook --host auto --event post-tool",
+            "commandWindows": "groundloop hook --host auto --event post-tool",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "groundloop hook --host auto --event user-prompt",
+            "commandWindows": "groundloop hook --host auto --event user-prompt",
+            "timeout": 3
+          }
+        ]
+      }
+    ]
+  }
+}

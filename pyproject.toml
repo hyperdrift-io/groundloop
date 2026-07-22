@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "groundloop-dev"
+version = "0.1.0"
+description = "Portable session grounding and continuous improvement for coding agents"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "Groundloop contributors" }]
+keywords = ["codex", "claude", "development", "continuous-improvement"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only"
+]
+
+[project.scripts]
+groundloop = "groundloop.cli:main"
+codex-ground-loop = "groundloop.launchers:codex_main"
+claude-ground-loop = "groundloop.launchers:claude_main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.data-files]
+"share/groundloop/plugin/.codex-plugin" = [".codex-plugin/plugin.json"]
+"share/groundloop/plugin/.claude-plugin" = [".claude-plugin/plugin.json"]
+"share/groundloop/plugin/hooks" = ["hooks/hooks.json"]
+"share/groundloop/plugin/skills/reflect-on-development" = ["skills/reflect-on-development/SKILL.md"]
+"share/groundloop/plugin/skills/reflect-on-development/agents" = ["skills/reflect-on-development/agents/openai.yaml"]
+"share/groundloop/plugin/skills/scout-development-improvements" = ["skills/scout-development-improvements/SKILL.md"]
+"share/groundloop/plugin/skills/scout-development-improvements/agents" = ["skills/scout-development-improvements/agents/openai.yaml"]
+"share/groundloop/plugin/skills/scout-development-improvements/references" = ["skills/scout-development-improvements/references/proposal-rubric.md"]
+"share/groundloop/schemas" = ["schemas/project-config.schema.json", "schemas/state.schema.json"]
+
+[tool.unittest]
+start-directory = "tests"

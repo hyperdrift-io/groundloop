@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "groundloop",
+  "displayName": "Groundloop",
+  "version": "0.1.0",
+  "description": "Keep AI development sessions grounded and continuously improve how work gets done.",
+  "author": {
+    "name": "Groundloop contributors"
+  },
+  "skills": "./skills/"
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Reflect on Development"
+  short_description: "Turn recent work into proven improvements"
+  default_prompt: "Use $reflect-on-development to review recent work and propose evidence-backed improvements."
