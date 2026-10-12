@@ -10,11 +10,25 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from groundloop.cli import _read_hook_input, command_hook
-from groundloop.config import create_project_config, find_project, register_project, state_path
+from groundloop.cli import _read_hook_input, command_hook, command_install
+from groundloop.config import (
+    UNRESTRICTED_ALIAS_CONSENT_VERSION,
+    create_project_config,
+    find_project,
+    has_unrestricted_alias_consent,
+    load_global_config,
+    register_project,
+    save_global_config,
+    state_path,
+)
 from groundloop.hooks import failure_excerpt, handle_hook
-from groundloop.installer import _apply_codex_cachebuster, _write_shims, install
-from groundloop.launchers import _run_groundloop_session, claude_command, codex_command
+from groundloop.installer import _apply_codex_cachebuster, _write_shims, install, uninstall
+from groundloop.launchers import (
+    _require_unrestricted_alias_consent,
+    _run_groundloop_session,
+    claude_command,
+    codex_command,
+)
 from groundloop.sessions import finalize_session
 from groundloop.state import default_state, load_state, observe_lesson, save_state
 from groundloop.status import build_status, format_status
@@ -211,7 +225,78 @@ class GroundloopTestCase(unittest.TestCase):
         self.assertFalse(marketplace.exists())
         result = install(["codex", "claude"], "work", dry_run=True)
         self.assertTrue(result["ok"])
+        self.assertTrue(result["requires_unrestricted_alias_consent"])
         self.assertFalse(marketplace.exists())
+
+    def test_installer_refuses_unrestricted_aliases_without_consent(self) -> None:
+        with patch("groundloop.installer._sync_plugin") as sync:
+            result = install(["codex", "claude"], "work")
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"], "unrestricted-alias-consent-required")
+        sync.assert_not_called()
+
+    def test_noninteractive_install_requires_risk_specific_flag(self) -> None:
+        args = SimpleNamespace(
+            hosts="codex,claude",
+            codex_profile="work",
+            dry_run=False,
+            accept_unrestricted_aliases=False,
+        )
+        with patch("groundloop.cli.sys.stdin", io.StringIO("")), patch(
+            "groundloop.cli.install"
+        ) as installer, patch("groundloop.cli.sys.stderr", io.StringIO()):
+            self.assertEqual(command_install(args), 2)
+        installer.assert_not_called()
+
+    def test_interactive_install_records_affirmative_consent(self) -> None:
+        args = SimpleNamespace(
+            hosts="codex,claude",
+            codex_profile="work",
+            dry_run=False,
+            accept_unrestricted_aliases=False,
+        )
+        with patch("groundloop.cli.sys.stdin.isatty", return_value=True), patch(
+            "builtins.input", return_value="yes"
+        ), patch("groundloop.cli.install", return_value={"ok": True}) as installer, patch(
+            "groundloop.cli._json"
+        ):
+            self.assertEqual(command_install(args), 0)
+        installer.assert_called_once_with(
+            ["codex", "claude"],
+            "work",
+            False,
+            accept_unrestricted_aliases=True,
+        )
+
+    def test_launchers_require_current_unrestricted_alias_consent(self) -> None:
+        with self.assertRaisesRegex(SystemExit, "explicitly confirm"):
+            _require_unrestricted_alias_consent({})
+        config = {
+            "unrestricted_aliases": {
+                "enabled": True,
+                "consent_version": UNRESTRICTED_ALIAS_CONSENT_VERSION,
+            }
+        }
+        self.assertTrue(has_unrestricted_alias_consent(config))
+        _require_unrestricted_alias_consent(config)
+
+    def test_uninstall_clears_unrestricted_alias_consent(self) -> None:
+        save_global_config(
+            {
+                "codex_profile": "work",
+                "hosts": ["codex", "claude"],
+                "plugin_dir": str(self.home / "marketplace" / "plugins" / "groundloop"),
+                "shim_dir": str(self.base / "bin"),
+                "unrestricted_aliases": {
+                    "enabled": True,
+                    "consent_version": UNRESTRICTED_ALIAS_CONSENT_VERSION,
+                },
+            }
+        )
+        with patch("groundloop.installer.command_path", return_value=None):
+            result = uninstall()
+        self.assertTrue(result["ok"])
+        self.assertFalse(has_unrestricted_alias_consent(load_global_config()))
 
     def test_installer_writes_cross_shell_shims(self) -> None:
         destination = self.base / "bin"

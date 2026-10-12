@@ -9,6 +9,7 @@ from .util import atomic_write_json, is_within, read_json, run_process
 
 
 SCHEMA_VERSION = 1
+UNRESTRICTED_ALIAS_CONSENT_VERSION = 1
 
 
 def groundloop_home() -> Path:
@@ -27,6 +28,15 @@ def load_global_config() -> dict[str, Any]:
 def save_global_config(config: dict[str, Any]) -> None:
     config["schema_version"] = SCHEMA_VERSION
     atomic_write_json(global_config_path(), config)
+
+
+def has_unrestricted_alias_consent(config: dict[str, Any]) -> bool:
+    consent = config.get("unrestricted_aliases")
+    return bool(
+        isinstance(consent, dict)
+        and consent.get("enabled") is True
+        and consent.get("consent_version") == UNRESTRICTED_ALIAS_CONSENT_VERSION
+    )
 
 
 def workspace_id(root: Path) -> str:

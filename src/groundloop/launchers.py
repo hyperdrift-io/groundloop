@@ -6,7 +6,7 @@ import sys
 import uuid
 from pathlib import Path
 
-from .config import load_global_config
+from .config import has_unrestricted_alias_consent, load_global_config
 from .util import command_path, record_runtime_failure
 
 
@@ -15,6 +15,13 @@ CODEX_BYPASS_OPTIONS = (
     "--dangerously-bypass-hook-trust",
 )
 CLAUDE_BYPASS_OPTION = "--dangerously-skip-permissions"
+
+
+def _require_unrestricted_alias_consent(config: dict[str, object]) -> None:
+    if not has_unrestricted_alias_consent(config):
+        raise SystemExit(
+            "Groundloop unrestricted aliases are not enabled. Run groundloop install and explicitly confirm the bypass modes."
+        )
 
 
 def _print_startup_summary() -> None:
@@ -90,6 +97,7 @@ def _run_groundloop_session(command: list[str], host: str) -> int:
 
 def codex_main() -> None:
     config = load_global_config()
+    _require_unrestricted_alias_consent(config)
     if not command_path("codex"):
         raise SystemExit("Codex is not installed or is not on PATH.")
     _print_startup_summary()
@@ -98,6 +106,7 @@ def codex_main() -> None:
 
 def claude_main() -> None:
     config = load_global_config()
+    _require_unrestricted_alias_consent(config)
     if not command_path("claude"):
         raise SystemExit("Claude Code is not installed or is not on PATH.")
     plugin_dir = config.get("plugin_dir")

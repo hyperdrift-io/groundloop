@@ -9,8 +9,14 @@ from pathlib import Path
 from typing import Any
 
 from . import __version__
-from .config import groundloop_home, load_global_config, save_global_config
-from .util import atomic_write_json, command_path, is_within, read_json, run_process
+from .config import (
+    UNRESTRICTED_ALIAS_CONSENT_VERSION,
+    groundloop_home,
+    has_unrestricted_alias_consent,
+    load_global_config,
+    save_global_config,
+)
+from .util import atomic_write_json, command_path, is_within, iso_now, read_json, run_process
 
 
 PLUGIN_PARTS = (".codex-plugin", ".claude-plugin", "hooks", "skills")
@@ -124,16 +130,37 @@ def _write_shims() -> tuple[Path, bool]:
     return destination, on_path
 
 
-def install(hosts: list[str], codex_profile: str, dry_run: bool = False) -> dict[str, Any]:
+def install(
+    hosts: list[str],
+    codex_profile: str,
+    dry_run: bool = False,
+    *,
+    accept_unrestricted_aliases: bool = False,
+) -> dict[str, Any]:
     source = source_plugin_root()
     destination = installed_plugin_dir()
-    actions = [f"sync plugin to {destination}"]
+    actions = [f"sync plugin to {destination}", "create unrestricted Codex and Claude launch aliases"]
     if "codex" in hosts:
         actions.extend([f"register Codex marketplace {marketplace_root()}", "install groundloop@groundloop-local"])
     if "claude" in hosts:
         actions.append("validate Claude plugin")
     if dry_run:
-        return {"ok": True, "dry_run": True, "actions": actions}
+        return {
+            "ok": True,
+            "dry_run": True,
+            "actions": actions,
+            "requires_unrestricted_alias_consent": True,
+        }
+    if not accept_unrestricted_aliases:
+        return {
+            "ok": False,
+            "error": "unrestricted-alias-consent-required",
+            "message": (
+                "Groundloop installation requires explicit consent before creating aliases that bypass "
+                "Codex approvals and sandboxing and Claude permission checks."
+            ),
+            "actions": actions,
+        }
 
     _sync_plugin(source, destination)
     installed_version = _apply_codex_cachebuster(destination)
@@ -190,6 +217,11 @@ def install(hosts: list[str], codex_profile: str, dry_run: bool = False) -> dict
             "plugin_version": installed_version,
             "marketplace_root": str(marketplace_root()),
             "shim_dir": str(shim_dir),
+            "unrestricted_aliases": {
+                "enabled": True,
+                "consent_version": UNRESTRICTED_ALIAS_CONSENT_VERSION,
+                "accepted_at": iso_now(),
+            },
         }
     )
     save_global_config(config)
@@ -222,10 +254,26 @@ def doctor(cwd: Path) -> dict[str, Any]:
     add("shim PATH", bool(command_path("groundloop")), command_path("groundloop") or f"add {shim_dir} to PATH")
     add("codex CLI", bool(command_path("codex")), command_path("codex") or "not found")
     add("claude CLI", bool(command_path("claude")), command_path("claude") or "not found")
-    if command_path("codex"):
-        add("Codex Groundloop bypass", True, "alias bypasses approvals, sandboxing, and hook trust")
-    if command_path("claude"):
-        add("Claude Groundloop bypass", True, "alias bypasses permission checks")
+    consented = has_unrestricted_alias_consent(config)
+    add(
+        "unrestricted alias consent",
+        consented,
+        "explicit consent recorded" if consented else "run groundloop install and confirm unrestricted aliases",
+    )
+    codex_shim = shim_dir / ("codex-ground-loop.cmd" if os.name == "nt" else "codex-ground-loop")
+    claude_shim = shim_dir / ("claude-ground-loop.cmd" if os.name == "nt" else "claude-ground-loop")
+    if "codex" in config.get("hosts", []) or command_path("codex"):
+        add(
+            "Codex Groundloop bypass",
+            consented and codex_shim.exists(),
+            "consented alias bypasses approvals, sandboxing, and hook trust" if consented else "consent not recorded",
+        )
+    if "claude" in config.get("hosts", []) or command_path("claude"):
+        add(
+            "Claude Groundloop bypass",
+            consented and claude_shim.exists(),
+            "consented alias bypasses permission checks" if consented else "consent not recorded",
+        )
     found = find_project(cwd)
     if found:
         root, project = found
@@ -260,6 +308,20 @@ def uninstall(purge_state: bool = False) -> dict[str, Any]:
                     results["actions"].append(f"removed {path}")
             except OSError:
                 results["ok"] = False
+    installation_keys = {
+        "hosts",
+        "marketplace_root",
+        "plugin_dir",
+        "plugin_version",
+        "shim_dir",
+        "unrestricted_aliases",
+        "version",
+    }
+    if installation_keys.intersection(config):
+        for key in installation_keys:
+            config.pop(key, None)
+        save_global_config(config)
+        results["actions"].append("cleared installation metadata and unrestricted-alias consent")
     if purge_state:
         projects = (home / "projects").resolve()
         if projects.exists() and is_within(projects, home) and projects != home:

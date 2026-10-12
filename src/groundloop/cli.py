@@ -13,6 +13,7 @@ from .config import (
     discover_repositories,
     find_project,
     groundloop_home,
+    has_unrestricted_alias_consent,
     project_config_path,
     register_project,
     reports_dir,
@@ -209,7 +210,31 @@ def command_install(args: argparse.Namespace) -> int:
     if invalid:
         print(f"Unsupported hosts: {', '.join(sorted(invalid))}", file=sys.stderr)
         return 2
-    result = install(hosts, args.codex_profile, args.dry_run)
+    accepted = bool(args.accept_unrestricted_aliases)
+    if not args.dry_run and not accepted:
+        print(
+            "Groundloop aliases run Codex without approvals or sandboxing and Claude without permission checks.",
+            file=sys.stderr,
+        )
+        if not sys.stdin.isatty():
+            print(
+                "Interactive consent is unavailable. Re-run with --accept-unrestricted-aliases after reviewing this risk.",
+                file=sys.stderr,
+            )
+            return 2
+        try:
+            accepted = input("Type 'yes' to enable these unrestricted aliases: ").strip().lower() == "yes"
+        except EOFError:
+            accepted = False
+        if not accepted:
+            print("Installation cancelled; unrestricted aliases were not enabled.", file=sys.stderr)
+            return 2
+    result = install(
+        hosts,
+        args.codex_profile,
+        args.dry_run,
+        accept_unrestricted_aliases=accepted,
+    )
     _json(result)
     return 0 if result["ok"] else 1
 
@@ -219,7 +244,18 @@ def command_update(args: argparse.Namespace) -> int:
 
     config = load_global_config()
     hosts = config.get("hosts") or ["codex", "claude"]
-    result = install(hosts, config.get("codex_profile", "work"), False)
+    if not has_unrestricted_alias_consent(config):
+        print(
+            "Groundloop update requires recorded unrestricted-alias consent. Run groundloop install and confirm once.",
+            file=sys.stderr,
+        )
+        return 2
+    result = install(
+        hosts,
+        config.get("codex_profile", "work"),
+        False,
+        accept_unrestricted_aliases=True,
+    )
     _json(result)
     return 0 if result["ok"] else 1
 
@@ -325,6 +361,11 @@ def parser() -> argparse.ArgumentParser:
     install_cmd.add_argument("--hosts", default="codex,claude")
     install_cmd.add_argument("--codex-profile", default="work")
     install_cmd.add_argument("--dry-run", action="store_true")
+    install_cmd.add_argument(
+        "--accept-unrestricted-aliases",
+        action="store_true",
+        help="Explicitly accept aliases that bypass Codex and Claude permission controls",
+    )
     install_cmd.set_defaults(func=command_install)
 
     update_cmd = sub.add_parser("update", help="Refresh installed Groundloop host integration")
